@@ -14,6 +14,7 @@ GameObject:
   - component: {fileID: 5574715299485672796}
   - component: {fileID: 3449548855343510546}
   - component: {fileID: 3052530025859865576}
+  - component: {fileID: 2445582965991050407}
   - component: {fileID: -4037549144968132619}
   - component: {fileID: -1879935054602732639}
   m_Layer: 6
@@ -209,6 +210,24 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 1
   GroundCheckDistance: 0.1
+--- !u!114 &2445582965991050407
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1704177324175083673}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2311d2c144ac2ef4696e69e01c530d62, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  syncDirection: 0
+  syncMode: 0
+  syncInterval: 0
+  BonusPickerMask:
+    serializedVersion: 2
+    m_Bits: 128
 --- !u!114 &-4037549144968132619
 MonoBehaviour:
   m_ObjectHideFlags: 0

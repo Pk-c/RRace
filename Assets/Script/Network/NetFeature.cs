@@ -8,7 +8,7 @@ namespace Game
         {
             SharedUpdate();
 
-            if (isLocalPlayer)
+            if (isOwned)
             {
                 OwnerUpdate();
             }
@@ -22,7 +22,7 @@ namespace Game
         {
             SharedFixedUpdate();
 
-            if (isLocalPlayer)
+            if (isOwned)
             {
                 OwnerFixedUpdate();
             }

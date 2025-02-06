@@ -33,7 +33,7 @@ namespace Game
 
         void Update()
         {
-            if (isLocalPlayer)
+            if (isOwned)
             {
                 // Periodically send state to the server
                 if (Time.time - _lastSentTime > SendRate)
@@ -46,7 +46,7 @@ namespace Game
 
         void FixedUpdate()
         {
-            if (!isLocalPlayer && _targetState.HasValue)
+            if (!isOwned && _targetState.HasValue)
             {
                 //We have correction to apply
                 Interpolate();
@@ -82,7 +82,7 @@ namespace Game
         void RpcSyncStateToClients(State serverState)
         {
             // If the host is also the local player, avoid redundant correction
-            if (isServer && isLocalPlayer) return;
+            if (isServer && isOwned) return;
 
             ApplyStateCorrection(serverState);
         }
@@ -90,7 +90,7 @@ namespace Game
         private void ApplyStateCorrection(State serverState)
         {
             // we check our history state against the latest server state, and apply correction if needed
-            if (isLocalPlayer)
+            if (isOwned)
             {
                 _targetState = null;
 
