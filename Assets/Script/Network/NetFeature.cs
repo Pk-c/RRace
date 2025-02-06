@@ -1,40 +1,43 @@
 using Mirror;
 
-public class NetFeature : NetworkBehaviour
+namespace Game
 {
-    public void Update()
+    public class NetFeature : NetworkBehaviour
     {
-        SharedUpdate();
+        public void Update()
+        {
+            SharedUpdate();
 
-        if(isLocalPlayer)
-        {
-            OwnerUpdate();
+            if (isLocalPlayer)
+            {
+                OwnerUpdate();
+            }
+            else
+            {
+                RemoteUpdate();
+            }
         }
-        else
+
+        public void FixedUpdate()
         {
-            RemoteUpdate();
+            SharedFixedUpdate();
+
+            if (isLocalPlayer)
+            {
+                OwnerFixedUpdate();
+            }
+            else
+            {
+                RemoteFixedUpdate();
+            }
         }
+
+        protected virtual void SharedUpdate() { }
+        protected virtual void OwnerUpdate() { }
+        protected virtual void RemoteUpdate() { }
+
+        protected virtual void SharedFixedUpdate() { }
+        protected virtual void OwnerFixedUpdate() { }
+        protected virtual void RemoteFixedUpdate() { }
     }
-
-    public void FixedUpdate()
-    {
-        SharedFixedUpdate();
-
-        if (isLocalPlayer)
-        {
-            OwnerFixedUpdate();
-        }
-        else
-        {
-            RemoteFixedUpdate();
-        }
-    }
-
-    protected virtual void SharedUpdate() { }
-    protected virtual void OwnerUpdate() { }
-    protected virtual void RemoteUpdate() { }
-
-    protected virtual void SharedFixedUpdate() { }
-    protected virtual void OwnerFixedUpdate() { }
-    protected virtual void RemoteFixedUpdate() { }
 }
