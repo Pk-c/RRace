@@ -4,7 +4,7 @@ using UnityEngine;
 namespace Game
 {
     [RequireComponent(typeof(BoxCollider2D))]
-    public class HealthAttribute : NetworkBehaviour
+    public class HealthAttribute : NetworkBehaviour, IReset
     {
         public TextMeshPro _indicator;
         public int StartLife = 3;
@@ -35,7 +35,7 @@ namespace Game
         public override void OnStartServer()
         {
             base.OnStartServer();
-            LifeAmount = StartLife;
+            Reset();
         }
 
         public override void OnStartClient()
@@ -48,6 +48,14 @@ namespace Game
         public void SetHealth(int amount)
         {
             LifeAmount = Mathf.Max(0, LifeAmount + amount);
+        }
+
+        public void Reset()
+        {
+            if (isServer)
+            {
+                LifeAmount = StartLife;
+            }
         }
 
         private void OnLifeChanged(int oldValue, int newValue)

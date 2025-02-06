@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace Game
 {
-    public class BonusSpawner : NetworkBehaviour
+    public class BonusSpawner : NetworkBehaviour, IReset
     {
         public Vector3 SpawnPosition = Vector3.zero;
         public GameObject ToSpawn = null;
@@ -43,13 +43,6 @@ namespace Game
         }
 
 
-        private void Reset()
-        {
-            _activated = true;
-            _bumped = false;
-        }
-
-
         private void SpawnBonus()
         {
             _activated = false;
@@ -74,6 +67,20 @@ namespace Game
             {
                 transform.GetChild(n).gameObject.SetActive(false);
             }
+        }
+
+        void Reset()
+        {
+            if (isServer)
+            {
+                _activated = true;
+                _bumped = false;
+            }
+        }
+
+        void IReset.Reset()
+        {
+            throw new System.NotImplementedException();
         }
     }
 }
