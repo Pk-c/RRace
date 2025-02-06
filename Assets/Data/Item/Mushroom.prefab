@@ -235,7 +235,7 @@ Rigidbody2D:
   m_Mass: 1
   m_LinearDrag: 0
   m_AngularDrag: 0.05
-  m_GravityScale: 1
+  m_GravityScale: 2
   m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2
@@ -266,6 +266,7 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 1
   MoveSpeed: 4
+  StartDirection: 1
 --- !u!114 &-6524786849775522172
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -317,3 +318,4 @@ MonoBehaviour:
   CorrectionScale: 10
   CorrectionThreshold: 0.1
   SendRate: 0.05
+  ServerOwner: 0
