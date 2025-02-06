@@ -14,7 +14,17 @@ namespace Game
         [SyncVar]
         private bool _bumped = false;
 
-        public void OnCollisionEnter2D(UnityEngine.Collision2D collision)
+        public void Start()
+        {
+            SceneManager.Register<IReset>(this);
+        }
+
+        public void OnDestroy()
+        {
+            SceneManager.Remove<IReset>(this);
+        }
+
+        public void OnCollisionEnter2D(Collision2D collision)
         {
             if (_activated && ToSpawn != null && collision.gameObject != null)
             {
@@ -42,14 +52,17 @@ namespace Game
             }
         }
 
-
         private void SpawnBonus()
         {
             _activated = false;
             _bumped = true;
+
+            //Ideally should be pooled.
             GameObject spawnedObject = Instantiate(ToSpawn, transform.position + SpawnPosition, Quaternion.identity);
-            //I use the loopback connection because mirror need a owner for object living on server
+            
+            //Server object need to have a owner to execute their behavior
             NetworkServer.Spawn(spawnedObject, NetworkServer.localConnection);
+            
         }
 
 #if UNITY_EDITOR
@@ -69,18 +82,18 @@ namespace Game
             }
         }
 
-        void Reset()
+        public void Reset()
         {
             if (isServer)
             {
-                _activated = true;
                 _bumped = false;
             }
-        }
-
-        void IReset.Reset()
-        {
-            throw new System.NotImplementedException();
+           
+            _activated = true;
+            for (int n = 0; n < transform.childCount; ++n)
+            {
+                transform.GetChild(n).gameObject.SetActive(true);
+            }            
         }
     }
 }

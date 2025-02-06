@@ -32,6 +32,16 @@ namespace Game
             _filter.layerMask = DamagerMask;
         }
 
+        public void Start()
+        {
+            SceneManager.Register<IReset>(this);
+        }
+
+        public void OnDestroy()
+        {
+            SceneManager.Remove<IReset>(this);
+        }
+
         public override void OnStartServer()
         {
             base.OnStartServer();

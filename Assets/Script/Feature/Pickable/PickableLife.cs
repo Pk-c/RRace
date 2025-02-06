@@ -4,8 +4,18 @@ using UnityEngine;
 
 namespace Game
 {
-    public class PickableLife : Pickable
+    public class PickableLife : Pickable, IReset
     {
+        public void Start()
+        {
+            SceneManager.Register<IReset>(this);
+        }
+
+        public void OnDestroy()
+        {
+            SceneManager.Remove<IReset>(this);
+        }
+
         public override void OnPicked(GameObject picker)
         {
             base.OnPicked(gameObject);
@@ -17,6 +27,14 @@ namespace Game
                 {
                     health.SetHealth(1);
                 }
+            }
+        }
+
+        public void Reset()
+        {
+            if (isServer)
+            {
+                NetworkServer.Destroy(gameObject);
             }
         }
     }

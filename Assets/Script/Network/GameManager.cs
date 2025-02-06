@@ -1,6 +1,6 @@
-using Game;
 using Mirror;
 using System.Collections;
+using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 
@@ -12,43 +12,14 @@ namespace Game
         {
             Running,
             Reseting,
-            Restart
+            Restart,
+            CountDown
         }
 
         public BoxCollider2D FinishBox;
         public TextMeshProUGUI Information;
 
         private GameState State = GameState.Running;
-
-        public override void OnStartServer()
-        {
-            base.OnStartServer();
-            NetworkServer.OnConnectedEvent += OnPlayerConnected;
-        }
-
-        public override void OnStopServer()
-        {
-            base.OnStopServer();
-            NetworkServer.OnConnectedEvent -= OnPlayerConnected;
-        }
-
-        public void OnPlayerConnected(NetworkConnectionToClient client)
-        {
-            if (client.identity != null)
-            {
-                SetPlayerInput(client, true);
-            }
-        }
-
-        [Server]
-        private void SetPlayerInput(NetworkConnectionToClient client, bool enabled)
-        {
-            var inputController = client.identity.GetComponent<PlayerInputController>();
-            if (inputController != null)
-            {
-                inputController.SetInputEnabled(enabled);
-            }
-        }
 
         public void Update()
         {
@@ -58,7 +29,6 @@ namespace Game
 
             switch (State)
             {
-
                 case GameState.Running:
 
                     foreach (NetworkConnectionToClient identity in NetworkServer.connections.Values)
@@ -78,7 +48,7 @@ namespace Game
                             // If a player finishes the race, they win and all others lose
                             if (FinishBox.bounds.Contains(player.transform.position))
                             {
-                                RpcShowFinishText(identity, Color.green, "YOU WIN"); // Winner
+                                RpcShowFinishText(identity, Color.green, "YOU WON"); // Winner
                                 NotifyOthersOfLoss(identity); // Make others lose
                                 State = GameState.Reseting;
                                 StartCoroutine(WaitForReset());
@@ -90,6 +60,12 @@ namespace Game
 
                 case GameState.Restart:
 
+                    //Reset Game
+                    List<IReset> resetable = SceneManager.GetObjects<IReset>();
+                    for(int i = 0; i < resetable.Count; i++)
+                    {
+                        resetable[i].Reset();
+                    }
         
                     //Respawn player
                     foreach (NetworkConnectionToClient client in NetworkServer.connections.Values)
@@ -107,13 +83,13 @@ namespace Game
                                 TargetRespawnPlayer(client, NetworkManager.singleton.GetStartPosition().position);
                             }
 
-                            RpcShowFinishText(client, Color.white, ""); 
-                            SetPlayerInput(client, true);
+                            RpcShowFinishText(client, Color.white, "");
                         }
                     }
 
                     //Ready let's go again
-                    State = GameState.Running;
+                    State = GameState.CountDown;
+                    StartCoroutine(CountDown());
 
                     break;
             }
@@ -127,10 +103,21 @@ namespace Game
             {
                 if (identity != winner) // Make sure we don't notify the winner
                 {
-                    RpcShowFinishText( identity, Color.red, "YOU LOOSE");
+                    RpcShowFinishText( identity, Color.red, "YOU LOST");
                     SetPlayerInput(identity, false);
                 }
             }
+        }
+
+        private IEnumerator CountDown()
+        {
+            //Insert a little delay to let everybody respawn properly and wait for their camera
+            yield return new WaitForSeconds(1f);
+            foreach (NetworkConnectionToClient identity in NetworkServer.connections.Values)
+            {
+                SetPlayerInput(identity, true);
+            }
+            State = GameState.Running;
         }
 
         private IEnumerator WaitForReset()
@@ -138,6 +125,15 @@ namespace Game
             //Let winner savour victory for 3 seconds...
             yield return new WaitForSeconds(3f);
             State = GameState.Restart;
+        }
+
+        [Server]
+        private void SetPlayerInput(NetworkConnectionToClient client, bool enabled)
+        {
+            if( client.identity.TryGetComponent<PlayerInputController>( out PlayerInputController controller))
+            {
+                controller.SetInputEnabled(enabled);
+            }
         }
 
         //RPCS
@@ -153,7 +149,15 @@ namespace Game
         public void TargetRespawnPlayer(NetworkConnectionToClient player, Vector3 newPosition)
         {
             //Get local player and reset position
-            NetworkServer.localConnection.identity.transform.position = newPosition;
+            NetworkClient.localPlayer.transform.position = newPosition;
+
+            //Reset everything client side
+            List<IReset> resetable = SceneManager.GetObjects<IReset>();
+            for (int i = 0; i < resetable.Count; i++)
+            {
+                if(resetable[i] != null )
+                    resetable[i].Reset();
+            }
         }
     }
 }
