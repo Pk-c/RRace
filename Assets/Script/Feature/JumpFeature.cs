@@ -5,6 +5,7 @@ namespace Game
 {
     [RequireComponent(typeof(Rigidbody2D))]
     [RequireComponent(typeof(BoxCollider2D))]
+    [RequireComponent (typeof(PlayerInputController))]
     public class JumpFeature : NetFeature
     {
         [SerializeField] private float MaxJumpForce = 12f;
@@ -19,11 +20,13 @@ namespace Game
         private float _jumpStartTime;
         private bool _isGrounded;
         private Vector2 _groundCheckSize;
+        private PlayerInputController _playerInputController;
 
         void Awake()
         {
             _body = GetComponent<Rigidbody2D>();
             _boxCollider = GetComponent<BoxCollider2D>();
+            _playerInputController = GetComponent<PlayerInputController>();
             _groundCheckSize = new Vector2(_boxCollider.bounds.size.x * 0.9f, 0.1f);
         }
 
@@ -42,7 +45,7 @@ namespace Game
 
         private void HandleJumpInput()
         {
-            if (Input.GetButtonDown("Jump") && _isGrounded)
+            if (_playerInputController.InputEnabled && Input.GetButtonDown("Jump") && _isGrounded)
             {
                 _isJumping = true;
                 _jumpStartTime = Time.time;

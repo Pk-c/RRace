@@ -5,6 +5,7 @@ namespace Game
 {
     [RequireComponent(typeof(Rigidbody2D))]
     [RequireComponent(typeof(BoxCollider2D))]
+    [RequireComponent(typeof(PlayerInputController))]
     public class RunFeature : NetFeature
     {
         private const float STOP_THRESHOLD = 0.1f;
@@ -19,16 +20,18 @@ namespace Game
         private Rigidbody2D _body;
         private BoxCollider2D _collider;
         private float _moveInput;
+        private PlayerInputController _playerInputController;
 
         void Awake()
         {
             _body = GetComponent<Rigidbody2D>();
             _collider = GetComponent<BoxCollider2D>();
+            _playerInputController = GetComponent<PlayerInputController>();
         }
 
         protected override void OwnerUpdate()
         {
-            _moveInput = Input.GetAxis("Horizontal");
+            _moveInput = _playerInputController.InputEnabled ? Input.GetAxis("Horizontal") : 0.0f;
         }
 
         protected override void OwnerFixedUpdate()

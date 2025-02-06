@@ -10,9 +10,13 @@ namespace Game
         {
             base.OnPicked(gameObject);
 
-            if (isOwned)
+            if (isServer)
             {
                 //Add life
+                if(picker.TryGetComponent<HealthAttribute>( out HealthAttribute health))
+                {
+                    health.SetHealth(1);
+                }
             }
         }
     }

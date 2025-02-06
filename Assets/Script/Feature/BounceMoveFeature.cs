@@ -7,10 +7,10 @@ namespace Game
     {
         public LayerMask WallLayer;
         public float MoveSpeed = 1.0f;
+        public float StartDirection = 1.0f;
 
         private Rigidbody2D _body;
         private BoxCollider2D _boxCollider;
-        private float _horizontalVelocity = 1.0f;
 
         void Awake()
         {
@@ -19,7 +19,7 @@ namespace Game
 
         protected override void OwnerFixedUpdate()
         {
-             _body.velocity = new Vector2(_horizontalVelocity * MoveSpeed, _body.velocity.y);
+             _body.velocity = new Vector2(StartDirection * MoveSpeed, _body.velocity.y);
         }
 
         public void OnCollisionEnter2D(Collision2D collision)
@@ -32,15 +32,15 @@ namespace Game
                 Vector2 normal = collision.contacts[0].normal;
    
                 //right wall
-                if (_horizontalVelocity >= 1.0f && normal.x < -0.5f)
+                if (StartDirection >= 1.0f && normal.x < -0.5f)
                 {
-                    _horizontalVelocity = -1.0f;
+                    StartDirection = -1.0f;
                 }
                 
                 //left wall
-                else if (_horizontalVelocity <= -1.0f && normal.x > 0.5f)
+                else if (StartDirection <= -1.0f && normal.x > 0.5f)
                 {
-                    _horizontalVelocity = 1.0f;
+                    StartDirection = 1.0f;
                 }
             }
         }

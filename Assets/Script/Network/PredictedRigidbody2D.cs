@@ -12,6 +12,7 @@ namespace Game
         public float CorrectionScale = 10.0f;
         public float CorrectionThreshold = 0.1f;
         public float SendRate = 0.05f;
+        public bool ServerOwner = false;
 
         private readonly struct State
         {
@@ -30,6 +31,18 @@ namespace Game
         private List<State> _stateHistory = new List<State>();
         private float _lastSentTime;
         private State? _targetState = null;
+
+        public override void OnStartServer()
+        {
+            //This is helpful for replicated object you would like to setup in the scene
+            if (ServerOwner)
+            {
+                NetworkIdentity identity = GetComponent<NetworkIdentity>();
+                identity.AssignClientAuthority(NetworkServer.localConnection);
+            }
+
+            base.OnStartServer();
+        }
 
         void Update()
         {
