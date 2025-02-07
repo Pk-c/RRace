@@ -5,9 +5,12 @@ namespace Game
 {
     public class BonusSpawner : NetworkBehaviour, IReset
     {
-        public Vector3 SpawnPosition = Vector3.zero;
-        public GameObject ToSpawn = null;
-        public LayerMask TriggerMask;
+        [SerializeField]
+        private Vector3 SpawnPosition = Vector3.zero;
+        [SerializeField]
+        private GameObject ToSpawn = null;
+        [SerializeField]
+        private LayerMask TriggerMask;
 
         private bool _activated = true;
 

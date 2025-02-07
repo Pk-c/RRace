@@ -315,7 +315,7 @@ MonoBehaviour:
   syncMode: 0
   syncInterval: 0
   Body: {fileID: 3831764782109698592}
-  CorrectionScale: 10
-  CorrectionThreshold: 0.1
-  SendRate: 0.05
+  CorrectionScale: 5
+  CorrectionThreshold: 1
+  SendRate: 0.03
   ServerOwner: 0

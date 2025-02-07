@@ -1,6 +1,5 @@
 using Mirror;
 using System.Collections;
-using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 
@@ -16,8 +15,10 @@ namespace Game
             CountDown
         }
 
-        public BoxCollider2D FinishBox;
-        public TextMeshProUGUI Information;
+        [SerializeField]
+        private BoxCollider2D FinishBox;
+        [SerializeField]
+        private TextMeshProUGUI Information;
 
         private GameState State = GameState.Running;
 
@@ -31,19 +32,21 @@ namespace Game
             {
                 case GameState.Running:
 
+                    foreach( var health in SceneManager.EnumerateObjects<HealthAttribute>())
+                    {
+                        // If a player dies, they lose immediately
+                        if (health.IsDead)
+                        {
+                            RpcShowFinishText(health.netIdentity.connectionToClient, Color.red, "YOU ARE DEAD");
+                            SetPlayerInput(health.netIdentity.connectionToClient, false);
+                        }
+                    }
+
                     foreach (NetworkConnectionToClient identity in NetworkServer.connections.Values)
                     {
                         if (identity.identity != null)
                         {
                             var player = identity.identity;
-
-                            // If a player dies, they lose immediately
-                            if (player.GetComponent<HealthAttribute>().IsDead)
-                            {
-                                RpcShowFinishText(identity, Color.red, "YOU ARE DEAD");
-                                SetPlayerInput(identity, false);
-
-                            }
 
                             // If a player finishes the race, they win and all others lose
                             if (FinishBox.bounds.Contains(player.transform.position))
@@ -61,10 +64,9 @@ namespace Game
                 case GameState.Restart:
 
                     //Reset Game
-                    List<IReset> resetable = SceneManager.GetObjects<IReset>();
-                    for(int i = 0; i < resetable.Count; i++)
+                    foreach(var resetable in SceneManager.EnumerateObjects<IReset>())
                     {
-                        resetable[i].Reset();
+                        resetable.Reset();
                     }
         
                     //Respawn player
@@ -149,15 +151,16 @@ namespace Game
         public void TargetRespawnPlayer(NetworkConnectionToClient player, Vector3 newPosition)
         {
             //Get local player and reset position
+
             NetworkClient.localPlayer.transform.position = newPosition;
 
             //Reset everything client side
-            List<IReset> resetable = SceneManager.GetObjects<IReset>();
-            for (int i = 0; i < resetable.Count; i++)
+
+            foreach (var resetable in SceneManager.EnumerateObjects<IReset>())
             {
-                if(resetable[i] != null )
-                    resetable[i].Reset();
-            }
+                if(resetable != null )
+                    resetable.Reset();
+            };
         }
     }
 }

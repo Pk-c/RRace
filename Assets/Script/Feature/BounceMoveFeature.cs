@@ -1,13 +1,15 @@
-using Mirror;
 using UnityEngine;
 
 namespace Game
 {
     public class BounceMoveFeature : NetFeature
     {
-        public LayerMask WallLayer;
-        public float MoveSpeed = 1.0f;
-        public float StartDirection = 1.0f;
+        [SerializeField]
+        private LayerMask WallLayer;
+        [SerializeField]
+        private float MoveSpeed = 1.0f;
+        [SerializeField]
+        private float StartDirection = 1.0f;
 
         private Rigidbody2D _body;
         private BoxCollider2D _boxCollider;

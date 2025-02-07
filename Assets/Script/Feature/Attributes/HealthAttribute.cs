@@ -6,10 +6,15 @@ namespace Game
     [RequireComponent(typeof(BoxCollider2D))]
     public class HealthAttribute : NetworkBehaviour, IReset
     {
-        public TextMeshPro _indicator;
-        public int StartLife = 3;
-        public float InvicibilityTime = 1.0f;
-        public LayerMask DamagerMask;
+        [SerializeField]
+        private TextMeshPro _indicator;
+        [SerializeField]
+        private int StartLife = 3;
+        [SerializeField]
+        private float InvicibilityTime = 1.0f;
+        [SerializeField]
+        private LayerMask DamagerMask;
+        [SerializeField]
         public float BlinkRate = 0.1f; // How fast to blink
 
         private Collider2D[] result = new Collider2D[1];
@@ -34,11 +39,13 @@ namespace Game
 
         public void Start()
         {
+            SceneManager.Register<HealthAttribute>(this);
             SceneManager.Register<IReset>(this);
         }
 
         public void OnDestroy()
         {
+            SceneManager.Remove<HealthAttribute>(this);
             SceneManager.Remove<IReset>(this);
         }
 

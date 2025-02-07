@@ -8,9 +8,10 @@ namespace Game
     [RequireComponent(typeof(BoxCollider2D))]
     public class BonusPickerFeature : NetFeature
     {
-        public LayerMask BonusPickerMask;
+        [SerializeField]
+        private LayerMask BonusPickerMask;
 
-        private Collider2D[] result = new Collider2D[1];
+        private Collider2D[] _result = new Collider2D[1];
         private BoxCollider2D _pickerCollider = null;
         private ContactFilter2D _filter;
 
@@ -26,12 +27,12 @@ namespace Game
             if (_pickerCollider == null)
                 return;
 
-            int numCollider = _pickerCollider.OverlapCollider(_filter, result);
+            int numCollider = _pickerCollider.OverlapCollider(_filter, _result);
             if(numCollider > 0)
             {
                 //Here using shared so we can spawn VFX or play sound on client when we pick something
 
-                if( result[0].gameObject.TryGetComponent<Pickable>( out Pickable pickable))
+                if( _result[0].gameObject.TryGetComponent<Pickable>( out Pickable pickable))
                 {
                     pickable.OnPicked(gameObject);
                 }

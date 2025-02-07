@@ -1,18 +1,23 @@
-using System.Collections.Generic;
 using UnityEngine;
 using Mirror;
 using System;
+using Mirror.SimpleWeb;
 
 namespace Game
 {
     public class PredictedRigidbody2D : NetworkBehaviour
     {
         [Header("Network Settings")]
-        public Rigidbody2D Body;
-        public float CorrectionScale = 10.0f;
-        public float CorrectionThreshold = 0.1f;
-        public float SendRate = 0.05f;
-        public bool ServerOwner = false;
+        [SerializeField]
+        private Rigidbody2D Body;
+        [SerializeField]
+        private float CorrectionScale = 10.0f;
+        [SerializeField]
+        private float CorrectionThreshold = 0.1f;
+        [SerializeField]
+        private float SendRate = 0.05f;
+        [SerializeField]
+        private bool ServerOwner = false;
 
         private readonly struct State
         {
@@ -28,30 +33,52 @@ namespace Game
             }
         }
 
-        private List<State> _stateHistory = new List<State>();
+        private const int MaxHistorySize = 30;
+        private State[] _stateHistory = new State[MaxHistorySize];
+        private int _historyCount = 0;
+        private int _historyStartIndex = 0;
         private float _lastSentTime;
         private State? _targetState = null;
+        private bool _bodyUpdate = false;
+        private double _lastRecievedTime = 0;
 
         public override void OnStartServer()
         {
-            //This is helpful for replicated object you would like to setup in the scene
             if (ServerOwner)
             {
                 NetworkIdentity identity = GetComponent<NetworkIdentity>();
                 identity.AssignClientAuthority(NetworkServer.localConnection);
             }
 
+            _lastRecievedTime = NetworkTime.time;
+
             base.OnStartServer();
+        }
+
+        public override void OnStartClient()
+        {
+            _lastRecievedTime = NetworkTime.time;
+
+            base.OnStartClient();
         }
 
         void Update()
         {
             if (isOwned)
             {
-                // Periodically send state to the server
                 if (Time.time - _lastSentTime > SendRate)
                 {
-                    SendStateToServer();
+                    if (isServer)
+                    {
+                        //Server owned player
+                        State currentState = new State(Body.position, Body.velocity, NetworkTime.time);
+                        RpcSyncStateToClients(currentState);
+                    }
+                    else
+                    {
+                        SendStateToServer();
+                    }
+
                     _lastSentTime = Time.time;
                 }
             }
@@ -59,84 +86,107 @@ namespace Game
 
         void FixedUpdate()
         {
-            if (!isOwned && _targetState.HasValue)
+            if( isServer && _bodyUpdate)
             {
-                //We have correction to apply
-                Interpolate();
+                _bodyUpdate = false;
+                State currentState = new State(Body.position, Body.velocity, NetworkTime.time); 
+                RpcSyncStateToClients(currentState);
+            }
+
+            if (!isOwned)
+            {
+                if (_targetState.HasValue)
+                {
+                    Interpolate();
+                }
             }
         }
 
         void SendStateToServer()
         {
             State currentState = new(Body.position, Body.velocity, NetworkTime.time);
-
-            if (!isServer)
-            {
-                // Store the state in the history buffer and send it
-                _stateHistory.Add(currentState);
-                CmdSendStateToServer(currentState);
-            }
-            else
-            {
-                // Server simply replicate his state to all clients
-                RpcSyncStateToClients(currentState);
-            }
+            AddStateToHistory(currentState);
+            CmdSendStateToServer(currentState);
         }
 
-        [Command]
+
+        [Command(channel = Channels.Unreliable)]
         void CmdSendStateToServer(State clientState)
         {
+            //Message can be recieved in the wrong order, we need to check against last timestamp
+            if (clientState.timestamp < _lastRecievedTime)
+                return;
+
+            _lastRecievedTime = clientState.timestamp;
+            _bodyUpdate = true;
+
+            //Here we could prevent cheating by checking the distance with current state and clientstate for Ex
             Body.position = clientState.position;
             Body.velocity = clientState.velocity;
-            RpcSyncStateToClients(clientState);
         }
 
-        [ClientRpc]
+        [ClientRpc(channel = Channels.Unreliable)]
         void RpcSyncStateToClients(State serverState)
         {
-            // If the host is also the local player, avoid redundant correction
+            //Message can be recieved in the wrong order, we need to check against last timestamp
+            if (serverState.timestamp < _lastRecievedTime)
+                return;
+
             if (isServer && isOwned) return;
 
+            _lastRecievedTime = serverState.timestamp;
             ApplyStateCorrection(serverState);
         }
 
         private void ApplyStateCorrection(State serverState)
         {
-            // we check our history state against the latest server state, and apply correction if needed
             if (isOwned)
             {
                 _targetState = null;
-
-                //We find the closest match to our last record history
-                int index = BinarySearch(serverState.timestamp);
+                int index = FindClosestStateIndex(serverState.timestamp);
                 if (index >= 0)
                 {
-                    if (Vector2.Distance(_stateHistory[index].position, serverState.position) > CorrectionThreshold)
+                    int realIndex = (_historyStartIndex + index) % MaxHistorySize;
+                    State pastState = _stateHistory[realIndex];
+
+                    float positionError = Vector2.Distance(pastState.position, serverState.position);
+
+                    if (positionError > CorrectionThreshold)
                     {
                         _targetState = serverState;
                     }
 
-                    _stateHistory.RemoveRange(0, index + 1);
+                    _historyStartIndex = (realIndex + 1) % MaxHistorySize;
+                    _historyCount = Math.Max(0, _historyCount - (index + 1));
                 }
             }
             else
             {
-                //this is not our player , we just get the latest state from the server
                 _targetState = serverState;
             }
         }
 
         private void Interpolate()
         {
-            //Here we interpolate the position and velocity of the rigidbody based on a scale factor
-            //This will help us to correct client that drifted away from the server state
+            if (!_targetState.HasValue) return;
 
             State target = _targetState.Value;
-            float lerpFactor = Time.fixedDeltaTime * CorrectionScale;
+            float deltaTime = Time.deltaTime; 
+            float smoothingFactor = Mathf.Clamp01(CorrectionScale * deltaTime);
+            Vector2 newPosition = Vector2.Lerp(Body.position, target.position, smoothingFactor);
+            Vector2 newVelocity = Vector2.Lerp(Body.velocity, target.velocity, smoothingFactor);
 
-            Body.position = Vector2.Lerp(Body.position, target.position, lerpFactor);
-            Body.velocity = Vector2.Lerp(Body.velocity, target.velocity, lerpFactor);
+            // Apply extrapolation if needed (if updates are delayed)
+            if (NetworkTime.time - _lastRecievedTime > SendRate)
+            {
+                float extrapolationTime = (float)(NetworkTime.time - _lastRecievedTime);
+                newPosition += newVelocity * extrapolationTime; // Trying to predict movement
+            }
 
+            Body.position = newPosition;
+            Body.velocity = newVelocity;
+
+            // If close enough, stop correcting
             if (Vector2.Distance(Body.position, target.position) < CorrectionThreshold)
             {
                 Body.position = target.position;
@@ -145,33 +195,32 @@ namespace Game
             }
         }
 
-        private int BinarySearch(double targetTimestamp)
+        private int FindClosestStateIndex(double targetTimestamp)
         {
-            int left = 0;
-            int right = _stateHistory.Count - 1;
-            int bestIndex = -1;
-
-            while (left <= right)
+            for (int i = _historyCount - 1; i >= 0; i--)
             {
-                int mid = left + (right - left) / 2;
-                double diff = Mathf.Abs((float)(_stateHistory[mid].timestamp - targetTimestamp));
-
-                if (diff < SendRate)
+                int realIndex = (_historyStartIndex + i) % MaxHistorySize;
+                if (Mathf.Abs((float)(_stateHistory[realIndex].timestamp - targetTimestamp)) < SendRate)
                 {
-                    bestIndex = mid;
-                    right = mid - 1; // Search for an earlier match
-                }
-                else if (_stateHistory[mid].timestamp < targetTimestamp)
-                {
-                    left = mid + 1;
-                }
-                else
-                {
-                    right = mid - 1;
+                    return i;
                 }
             }
+            return -1;
+        }
 
-            return bestIndex;
+        private void AddStateToHistory(State state)
+        {
+            int insertIndex = (_historyStartIndex + _historyCount) % MaxHistorySize;
+            _stateHistory[insertIndex] = state;
+
+            if (_historyCount < MaxHistorySize)
+            {
+                _historyCount++;
+            }
+            else
+            {
+                _historyStartIndex = (_historyStartIndex + 1) % MaxHistorySize;
+            }
         }
     }
 }

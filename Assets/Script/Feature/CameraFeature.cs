@@ -5,7 +5,8 @@ namespace Game
 {
     public class CameraFeature : NetworkBehaviour
     {
-        public float Speed = 5.0f;
+        [SerializeField]
+        private float Speed = 5.0f;
 
         public override void OnStartAuthority()
         {
