@@ -6,12 +6,11 @@ namespace Game
     {
         private Transform _player;
         private float _smoothSpeed = 5f;
-        private float _minY;
         private float _minX;
+        private Vector3 _velocity = Vector3.zero; // Persistent velocity across frames
 
         void Start()
         {
-            _minY = transform.position.y;
             _minX = transform.position.x;
         }
 
@@ -25,10 +24,9 @@ namespace Game
         {
             if (_player == null) return;
 
-            Vector3 targetPosition = new Vector3(_player.position.x, _player.position.y, transform.position.z);
-            targetPosition.x = Mathf.Max(targetPosition.x, _minX);
-            targetPosition.y = Mathf.Max(targetPosition.y, _minY);
-            transform.position = Vector3.Lerp(transform.position, targetPosition, _smoothSpeed * Time.deltaTime);
+            float targetX = Mathf.Max(_player.position.x, _minX);
+            Vector3 targetPosition = new Vector3(targetX, transform.position.y, transform.position.z);
+            transform.position = Vector3.SmoothDamp(transform.position, targetPosition, ref _velocity, _smoothSpeed);
         }
     }
 }

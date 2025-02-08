@@ -68,7 +68,7 @@ namespace Game
 
         bool CheckDirection(Vector2 dir)
         {
-            Vector2 boxSize = new Vector2(0.1f, _collider.bounds.size.y * 0.9f);
+            Vector2 boxSize = new Vector2(0.1f, _collider.bounds.size.y * 0.5f);
             Vector2 boxCenter = (Vector2)transform.position;
             return Physics2D.OverlapBox(boxCenter + dir * WallCheckDistance, boxSize, 0, WallLayer) != null;
         }

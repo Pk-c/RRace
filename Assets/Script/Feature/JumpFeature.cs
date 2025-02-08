@@ -15,10 +15,12 @@ namespace Game
         [SerializeField] private float GroundCheckDistance = 0.1f;
 
         private Rigidbody2D _body;
+        public Rigidbody2D Body {  get { return _body; } }
         private BoxCollider2D _boxCollider;
         private bool _isJumping;
         private float _jumpStartTime;
         private bool _isGrounded;
+        public bool IsGrounded {  get { return _isGrounded; } }
         private Vector2 _groundCheckSize;
         private PlayerInputController _playerInputController;
 

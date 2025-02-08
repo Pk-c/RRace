@@ -3,8 +3,14 @@ using UnityEngine;
 
 namespace Game
 {
+    [RequireComponent(typeof(SpriteRenderer))]
     public class BonusSpawner : NetworkBehaviour, IReset
     {
+        [SerializeField]
+        private Sprite Activated;
+        [SerializeField]
+        private Sprite Deactivated;
+
         [SerializeField]
         private Vector3 SpawnPosition = Vector3.zero;
         [SerializeField]
@@ -12,6 +18,7 @@ namespace Game
         [SerializeField]
         private LayerMask TriggerMask;
 
+        private SpriteRenderer _renderder = null;
         private bool _activated = true;
 
         [SyncVar]
@@ -20,6 +27,7 @@ namespace Game
         public void Start()
         {
             SceneManager.Register<IReset>(this);
+            _renderder = GetComponent<SpriteRenderer>();
         }
 
         public void OnDestroy()
@@ -79,6 +87,7 @@ namespace Game
         public void Deactivate()
         {
             _activated = false;
+            _renderder.sprite = Deactivated;
             for (int n = 0; n < transform.childCount; ++n)
             {
                 transform.GetChild(n).gameObject.SetActive(false);
@@ -93,10 +102,11 @@ namespace Game
             }
            
             _activated = true;
+            _renderder.sprite = Activated;
             for (int n = 0; n < transform.childCount; ++n)
             {
                 transform.GetChild(n).gameObject.SetActive(true);
-            }            
+            }
         }
     }
 }
