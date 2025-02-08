@@ -9,7 +9,7 @@ namespace Game
     {
         public virtual void OnPicked(GameObject picker) 
         { 
-            //Only server own bonus, so only server will destroy them
+            //Only owner of the bonus will destroy it ( in our case it's the server )
             if(isOwned)
             {
                 NetworkServer.Destroy(gameObject);

@@ -1,7 +1,6 @@
 using UnityEngine;
 using Mirror;
 using System;
-using Mirror.SimpleWeb;
 
 namespace Game
 {
@@ -39,8 +38,8 @@ namespace Game
         private int _historyStartIndex = 0;
         private float _lastSentTime;
         private State? _targetState = null;
-        private bool _bodyUpdate = false;
         private double _lastRecievedTime = 0;
+        private bool _bodyUpdated = false;
 
         public override void OnStartServer()
         {
@@ -68,37 +67,35 @@ namespace Game
             {
                 if (Time.time - _lastSentTime > SendRate)
                 {
-                    if (isServer)
+                    //Client owned send state to the server
+                    if (!isServer)
                     {
-                        //Server owned player
-                        State currentState = new State(Body.position, Body.velocity, NetworkTime.time);
-                        RpcSyncStateToClients(currentState);
+                        SendStateToServer();
                     }
                     else
                     {
-                        SendStateToServer();
+                        //Server owned send state to client
+                        State currentState = new State(Body.position, Body.velocity, NetworkTime.time);
+                        RpcSyncStateToClients(currentState);
                     }
 
                     _lastSentTime = Time.time;
                 }
             }
+            else if( isServer && _bodyUpdated )
+            {
+                //Send player data back to all client
+                State currentState = new State(Body.position, Body.velocity, NetworkTime.time);
+                RpcSyncStateToClients(currentState);
+                _bodyUpdated = false;
+            }
         }
 
         void FixedUpdate()
-        {
-            if( isServer && _bodyUpdate)
+        {           
+            if (_targetState.HasValue)
             {
-                _bodyUpdate = false;
-                State currentState = new State(Body.position, Body.velocity, NetworkTime.time); 
-                RpcSyncStateToClients(currentState);
-            }
-
-            if (!isOwned)
-            {
-                if (_targetState.HasValue)
-                {
-                    Interpolate();
-                }
+                Interpolate();
             }
         }
 
@@ -118,20 +115,22 @@ namespace Game
                 return;
 
             _lastRecievedTime = clientState.timestamp;
-            _bodyUpdate = true;
 
-            //Here we could prevent cheating by checking the distance with current state and clientstate for Ex
+            //Here we could make different check to prevent cheating
+            //Ex : test the distance between previous and current with timestep to see if the movement seem reasonable
             Body.position = clientState.position;
             Body.velocity = clientState.velocity;
+            _bodyUpdated = true;
         }
 
         [ClientRpc(channel = Channels.Unreliable)]
         void RpcSyncStateToClients(State serverState)
         {
-            //Message can be recieved in the wrong order, we need to check against last timestamp
+            //Message can be recieved in the wrong order, so we need to check against last timestamp
             if (serverState.timestamp < _lastRecievedTime)
                 return;
 
+            //Ignore server player
             if (isServer && isOwned) return;
 
             _lastRecievedTime = serverState.timestamp;
@@ -168,10 +167,8 @@ namespace Game
 
         private void Interpolate()
         {
-            if (!_targetState.HasValue) return;
-
             State target = _targetState.Value;
-            float deltaTime = Time.deltaTime; 
+            float deltaTime = Time.fixedDeltaTime; 
             float smoothingFactor = Mathf.Clamp01(CorrectionScale * deltaTime);
             Vector2 newPosition = Vector2.Lerp(Body.position, target.position, smoothingFactor);
             Vector2 newVelocity = Vector2.Lerp(Body.velocity, target.velocity, smoothingFactor);
@@ -200,7 +197,7 @@ namespace Game
             for (int i = _historyCount - 1; i >= 0; i--)
             {
                 int realIndex = (_historyStartIndex + i) % MaxHistorySize;
-                if (Mathf.Abs((float)(_stateHistory[realIndex].timestamp - targetTimestamp)) < SendRate)
+                if (Mathf.Abs((float)(_stateHistory[realIndex].timestamp - targetTimestamp)) <= SendRate)
                 {
                     return i;
                 }

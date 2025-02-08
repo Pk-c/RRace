@@ -5,7 +5,7 @@ namespace Game
 {
     public class PlayerInputController : NetworkBehaviour
     {
-        //Simple input controller to handle player state
+        //Simple input controller to lock / unlock player input
 
         [SyncVar]
         private bool _inputEnabled = true;

@@ -7,7 +7,7 @@ namespace Game
         private Transform _player;
         private float _smoothSpeed = 5f;
         private float _minX;
-        private Vector3 _velocity = Vector3.zero; // Persistent velocity across frames
+        private Vector3 _velocity = Vector3.zero;
 
         void Start()
         {
