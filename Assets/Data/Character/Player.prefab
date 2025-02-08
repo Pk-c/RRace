@@ -505,11 +505,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   Skins:
-  - Idle: {fileID: -1169635030, guid: b92b49e411b79cf4aa43779043fb666c, type: 3}
-    Jump: {fileID: -630554649, guid: b92b49e411b79cf4aa43779043fb666c, type: 3}
-  - Idle: {fileID: -547828793, guid: f57d4665a579c9148a2333fb860c3947, type: 3}
-    Jump: {fileID: -284507159, guid: f57d4665a579c9148a2333fb860c3947, type: 3}
-  - Idle: {fileID: 1320373033, guid: 0ebfa67a059a9564b8cbc33bf5b2179c, type: 3}
-    Jump: {fileID: 670611962, guid: 0ebfa67a059a9564b8cbc33bf5b2179c, type: 3}
   - Idle: {fileID: -8998824888050996201, guid: 0926581c884b5496eaea0bd8ad02ae7f, type: 3}
     Jump: {fileID: 5390994177579313587, guid: 0926581c884b5496eaea0bd8ad02ae7f, type: 3}
+  - Idle: {fileID: 1320373033, guid: 0ebfa67a059a9564b8cbc33bf5b2179c, type: 3}
+    Jump: {fileID: 670611962, guid: 0ebfa67a059a9564b8cbc33bf5b2179c, type: 3}
+  - Idle: {fileID: -547828793, guid: f57d4665a579c9148a2333fb860c3947, type: 3}
+    Jump: {fileID: -284507159, guid: f57d4665a579c9148a2333fb860c3947, type: 3}
+  - Idle: {fileID: -1169635030, guid: b92b49e411b79cf4aa43779043fb666c, type: 3}
+    Jump: {fileID: -630554649, guid: b92b49e411b79cf4aa43779043fb666c, type: 3}
