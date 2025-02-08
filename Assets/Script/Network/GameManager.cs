@@ -32,30 +32,40 @@ namespace Game
             {
                 case GameState.Running:
 
-                    foreach( var health in SceneManager.EnumerateObjects<HealthAttribute>())
+                    int deadClient = 0;
+                    foreach (var health in SceneManager.EnumerateObjects<HealthAttribute>())
                     {
                         // If a player dies, they lose immediately
                         if (health.IsDead)
                         {
+                            deadClient++;
                             RpcShowFinishText(health.netIdentity.connectionToClient, Color.red, "YOU ARE DEAD");
                             SetPlayerInput(health.netIdentity.connectionToClient, false);
                         }
                     }
 
-                    foreach (NetworkConnectionToClient identity in NetworkServer.connections.Values)
+                    if (deadClient == NetworkServer.connections.Values.Count)
                     {
-                        if (identity.identity != null)
+                        State = GameState.Reseting;
+                        StartCoroutine(WaitForReset());
+                    }
+                    else
+                    {
+                        foreach (NetworkConnectionToClient identity in NetworkServer.connections.Values)
                         {
-                            var player = identity.identity;
-
-                            // If a player finishes the race, they win and all others lose
-                            if (FinishBox.bounds.Contains(player.transform.position))
+                            if (identity.identity != null)
                             {
-                                RpcShowFinishText(identity, Color.green, "YOU WON"); // Winner
-                                NotifyOthersOfLoss(identity); // Make others lose
-                                State = GameState.Reseting;
-                                StartCoroutine(WaitForReset());
-                                return; // End the check after we have a winner
+                                var player = identity.identity;
+
+                                // If a player finishes the race, they win and all others lose
+                                if (FinishBox.bounds.Contains(player.transform.position))
+                                {
+                                    RpcShowFinishText(identity, Color.green, "YOU WON"); // Winner
+                                    NotifyOthersOfLoss(identity); // Make others lose
+                                    State = GameState.Reseting;
+                                    StartCoroutine(WaitForReset());
+                                    return; // End the check after we have a winner
+                                }
                             }
                         }
                     }
